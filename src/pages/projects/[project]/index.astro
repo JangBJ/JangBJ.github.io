@@ -114,9 +114,15 @@ let counter = 0;
 
     {
       chapters.length === 0 ? (
+        /* 방문자에게 작성 경로를 보여 줄 이유는 없으니 경로는 개발 중에만 덧붙입니다. */
         <p class="empty">
-          아직 글이 없습니다. <code>src/content/chapters/{project.id}/</code> 에 마크다운을
-          추가하세요.
+          아직 정리한 글이 없습니다.
+          {import.meta.env.DEV && (
+            <>
+              <br />
+              <code>src/content/chapters/{project.id}/</code> 에 마크다운을 추가하세요.
+            </>
+          )}
         </p>
       ) : (
         groups.map((group) => (
