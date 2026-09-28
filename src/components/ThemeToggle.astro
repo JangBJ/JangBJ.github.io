@@ -1,0 +1,81 @@
+---
+// 라이트 / 다크 전환. 선택은 localStorage 에 남습니다.
+// 기본값(저장값 없음)은 다크 — BaseLayout 의 인라인 스크립트가 정합니다.
+---
+
+<button
+  type="button"
+  class="toggle"
+  data-theme-toggle
+  aria-label="테마 전환"
+  title="라이트 / 다크 전환"
+>
+  <span class="glyph light" aria-hidden="true">☀</span>
+  <span class="glyph dark" aria-hidden="true">☾</span>
+</button>
+
+<script>
+  const button = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+
+  const sync = () => {
+    const isDark = document.documentElement.dataset.theme !== 'light';
+    button?.setAttribute('aria-pressed', String(isDark));
+  };
+
+  button?.addEventListener('click', () => {
+    const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = next;
+    try {
+      localStorage.setItem('theme', next);
+    } catch {
+      /* 저장이 막혀 있어도 이번 방문 동안은 전환됩니다 */
+    }
+    sync();
+  });
+
+  sync();
+</script>
+
+<style>
+  .toggle {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    background: transparent;
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+    cursor: pointer;
+    transition:
+      color var(--transition),
+      border-color var(--transition),
+      background var(--transition);
+  }
+
+  .toggle:hover {
+    color: var(--accent);
+    border-color: var(--accent-border);
+    background: var(--accent-bg);
+  }
+
+  .glyph {
+    grid-area: 1 / 1;
+    font-size: 0.875rem;
+    line-height: 1;
+  }
+
+  /* 다크일 때는 달, 라이트일 때는 해를 보여 줍니다 (지금 상태를 표시) */
+  .light {
+    display: none;
+  }
+
+  :global(:root[data-theme='light']) .light {
+    display: block;
+  }
+
+  :global(:root[data-theme='light']) .dark {
+    display: none;
+  }
+</style>

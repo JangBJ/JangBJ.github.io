@@ -1,0 +1,202 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { about } from '../about.config';
+import { site } from '../site.config';
+
+/** 세 섹션이 같은 모양이라 데이터만 바꿔 한 번에 그립니다 */
+const sections = [
+  {
+    key: 'career',
+    label: 'career',
+    rows: about.career.map((c) => ({
+      head: c.role,
+      sub: c.company,
+      period: c.period,
+      note: c.note,
+    })),
+  },
+  {
+    key: 'education',
+    label: 'education',
+    rows: about.education.map((e) => ({
+      head: e.school,
+      sub: e.degree,
+      period: e.period,
+      note: e.note,
+    })),
+  },
+  {
+    key: 'certifications',
+    label: 'certifications',
+    rows: about.certifications.map((c) => ({
+      head: c.name,
+      sub: c.issuer,
+      period: c.date,
+      note: c.note,
+    })),
+  },
+].filter((s) => s.rows.length > 0);
+---
+
+<BaseLayout title="About" description={`${site.name} — 학력 · 경력 · 자격증`} narrow>
+  <header class="head">
+    <p class="cmdline">
+      <span class="prompt" aria-hidden="true">$</span>
+      <span class="cmd">cat</span>
+      <span class="arg">about.md</span>
+    </p>
+    <h1>About</h1>
+    {about.intro && <p class="intro">{about.intro}</p>}
+  </header>
+
+  {
+    sections.map((section) => (
+      <section class="block" aria-labelledby={`${section.key}-heading`}>
+        <h2 id={`${section.key}-heading`} class="section-label">
+          {section.label}
+        </h2>
+
+        <ul class="rows">
+          {section.rows.map((row) => (
+            <li class="row">
+              <div class="main">
+                <span class="rhead">{row.head}</span>
+                {row.sub && <span class="rsub">{row.sub}</span>}
+                {row.note && <span class="rnote">{row.note}</span>}
+              </div>
+              {row.period && <span class="rperiod">{row.period}</span>}
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+
+  {
+    sections.length === 0 && (
+      <p class="empty">
+        <code>src/about.config.ts</code> 를 채우면 이 자리에 표시됩니다.
+      </p>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .head {
+    display: grid;
+    gap: var(--space-3);
+    padding-bottom: var(--space-5);
+    border-bottom: var(--border-width) solid var(--border);
+  }
+
+  .cmdline {
+    display: flex;
+    gap: 0.6ch;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+  }
+
+  .prompt {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .cmd {
+    color: var(--magenta);
+  }
+  .arg {
+    color: var(--green);
+  }
+
+  h1 {
+    font-family: var(--font-mono);
+    font-size: var(--text-xl);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-strong);
+  }
+
+  .intro {
+    font-family: var(--font-sans);
+    font-size: var(--text-md);
+    line-height: var(--leading-relaxed);
+    color: var(--muted);
+  }
+
+  .block {
+    display: grid;
+    gap: var(--space-4);
+    margin-top: var(--space-7);
+  }
+
+  .rows {
+    display: grid;
+    list-style: none;
+    padding: 0;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    padding: var(--space-3) 0;
+    border-bottom: var(--border-width) solid var(--border);
+  }
+
+  .row:last-child {
+    border-bottom: 0;
+  }
+
+  .main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  .rhead {
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--text-strong);
+  }
+
+  .rsub {
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    color: var(--muted);
+  }
+
+  .rnote {
+    padding: 0.1em 0.5em;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--green);
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+
+  .rperiod {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--faint);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .empty {
+    margin-top: var(--space-7);
+    padding: var(--space-6);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-size: var(--text-sm);
+    text-align: center;
+  }
+
+  .empty code {
+    color: var(--amber);
+  }
+</style>

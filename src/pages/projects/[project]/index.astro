@@ -1,0 +1,335 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ChapterRow from '../../../components/ChapterRow.astro';
+import { getChapters, groupChapters, visible } from '../../../lib/content';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects');
+  // draft 프로젝트는 프로덕션에서 페이지 자체를 만들지 않습니다.
+  return projects
+    .filter(visible)
+    .map((project) => ({ params: { project: project.id }, props: { project } }));
+}
+
+const { project } = Astro.props;
+const { title, summary, kind, stack, period, repo, demo, gallery, cover } = project.data;
+
+const chapters = await getChapters(project.id);
+const { grouped, groups } = groupChapters(chapters);
+
+/** 본문이 있을 때만 '개요' 블록을 그립니다 */
+const hasOverview = (project.body ?? '').trim().length > 0;
+const { Content } = await render(project);
+
+/** gallery 가 비어 있으면 cover 한 장이라도 씁니다 */
+const shots = gallery.length > 0 ? gallery : cover ? [cover] : [];
+
+/** 카테고리 그룹을 넘어가도 번호는 이어집니다 */
+let counter = 0;
+---
+
+<BaseLayout title={title} description={summary}>
+  <a class="back" href="/">
+    <span aria-hidden="true">cd ..</span>
+    <span class="sr">프로젝트 목록으로</span>
+  </a>
+
+  <header class="head">
+    <div class="titlerow">
+      <h1>{title}</h1>
+      {kind && <span class="kind">{kind}</span>}
+    </div>
+
+    <p class="summary">{summary}</p>
+
+    <dl class="facts">
+      {
+        period && (
+          <div>
+            <dt>period</dt>
+            <dd>{period}</dd>
+          </div>
+        )
+      }
+      {
+        stack.length > 0 && (
+          <div>
+            <dt>stack</dt>
+            <dd class="stack">
+              {stack.map((s) => (
+                <span>{s}</span>
+              ))}
+            </dd>
+          </div>
+        )
+      }
+      {
+        (repo || demo) && (
+          <div>
+            <dt>links</dt>
+            <dd class="links">
+              {repo && (
+                <a href={repo} rel="noopener">
+                  repo ↗
+                </a>
+              )}
+              {demo && (
+                <a href={demo} rel="noopener">
+                  demo ↗
+                </a>
+              )}
+            </dd>
+          </div>
+        )
+      }
+    </dl>
+  </header>
+
+  {
+    shots.length > 0 && (
+      <div class="shots" role="group" aria-label="스크린샷">
+        {shots.map((src) => (
+          <img src={src} alt="" loading="lazy" decoding="async" />
+        ))}
+      </div>
+    )
+  }
+
+  {
+    hasOverview && (
+      <section class="overview" aria-labelledby="overview-heading">
+        <h2 id="overview-heading" class="section-label">
+          overview
+        </h2>
+        <div class="prose">
+          <Content />
+        </div>
+      </section>
+    )
+  }
+
+  <section class="chapters" aria-labelledby="chapters-heading">
+    <h2 id="chapters-heading" class="section-label">chapters</h2>
+
+    {
+      chapters.length === 0 ? (
+        <p class="empty">
+          아직 글이 없습니다. <code>src/content/chapters/{project.id}/</code> 에 마크다운을
+          추가하세요.
+        </p>
+      ) : (
+        groups.map((group) => (
+          <div class="group">
+            {grouped && group.name && <h3 class="groupname">{group.name}</h3>}
+            <div class="list">
+              {group.items.map((c) => {
+                counter += 1;
+                return <ChapterRow chapter={c} index={counter} />;
+              })}
+            </div>
+          </div>
+        ))
+      )
+    }
+  </section>
+</BaseLayout>
+
+<style>
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .back {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--muted);
+    text-decoration: none;
+  }
+
+  .back::before {
+    content: '$ ';
+    color: var(--accent);
+  }
+
+  .back:hover {
+    color: var(--accent);
+  }
+
+  .head {
+    display: grid;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+    padding-bottom: var(--space-5);
+    border-bottom: var(--border-width) solid var(--border);
+  }
+
+  .titlerow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-3);
+  }
+
+  h1 {
+    font-family: var(--font-mono);
+    font-size: var(--text-xl);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: var(--leading-tight);
+    color: var(--text-strong);
+  }
+
+  .kind {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--amber);
+    padding: 0.15em 0.5em;
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+
+  .summary {
+    font-family: var(--font-sans);
+    font-size: var(--text-md);
+    line-height: var(--leading-relaxed);
+    color: var(--muted);
+    max-width: var(--prose-width);
+  }
+
+  .facts {
+    display: grid;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+  }
+
+  .facts > div {
+    display: grid;
+    grid-template-columns: 5rem 1fr;
+    gap: var(--space-3);
+    align-items: baseline;
+  }
+
+  .facts dt {
+    color: var(--faint);
+  }
+
+  .facts dt::after {
+    content: ':';
+  }
+
+  .facts dd {
+    margin: 0;
+    color: var(--text);
+  }
+
+  .stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-2);
+  }
+
+  .stack span {
+    padding: 0.1em 0.5em;
+    font-size: var(--text-xs);
+    color: var(--accent);
+    background: var(--accent-bg);
+    border: var(--border-width) solid var(--accent-border);
+    border-radius: var(--radius-sm);
+  }
+
+  .links {
+    display: flex;
+    gap: var(--space-4);
+  }
+
+  /* 스크린샷 — 가로 스크롤 스냅 */
+  .shots {
+    display: flex;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+    padding-bottom: var(--space-2);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+
+  .shots img {
+    flex: 0 0 auto;
+    width: min(100%, 34rem);
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    scroll-snap-align: start;
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-sunken);
+  }
+
+  .overview {
+    display: grid;
+    gap: var(--space-4);
+    margin-top: var(--space-7);
+  }
+
+  .overview .prose {
+    max-width: var(--prose-width);
+  }
+
+  .chapters {
+    display: grid;
+    gap: var(--space-5);
+    margin-top: var(--space-7);
+  }
+
+  .group {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .group + .group {
+    margin-top: var(--space-5);
+  }
+
+  .groupname {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--amber);
+  }
+
+  .groupname::before {
+    content: '▸ ';
+    color: var(--faint);
+  }
+
+  .list {
+    display: grid;
+  }
+
+  .empty {
+    padding: var(--space-6);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-size: var(--text-sm);
+    text-align: center;
+  }
+
+  .empty code {
+    color: var(--amber);
+  }
+
+  @media (max-width: 40rem) {
+    .facts > div {
+      grid-template-columns: 1fr;
+      gap: var(--space-1);
+    }
+  }
+</style>

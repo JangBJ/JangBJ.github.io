@@ -1,0 +1,282 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import { site } from '../site.config';
+import { getProjects, getChapterCounts } from '../lib/content';
+
+const projects = await getProjects();
+const counts = await getChapterCounts();
+---
+
+<BaseLayout>
+  <section class="hero" aria-labelledby="hero-name">
+    <div class="window">
+      <div class="bar">
+        <span class="dots" aria-hidden="true">
+          <i class="dot r"></i><i class="dot a"></i><i class="dot g"></i>
+        </span>
+        <span class="bartitle">{site.handle} — zsh</span>
+      </div>
+
+      <div class="screen">
+        <p class="cmdline">
+          <span class="prompt" aria-hidden="true">$</span>
+          <span class="cmd">whoami</span>
+        </p>
+
+        <h1 id="hero-name" class="name">
+          {site.name}<span class="role">{site.role}</span>
+        </h1>
+
+        <p class="cmdline second">
+          <span class="prompt" aria-hidden="true">$</span>
+          <span class="cmd">cat</span>
+          <span class="arg">README.md</span>
+        </p>
+
+        <div class="intro">
+          {site.intro.map((line) => <p>{line}</p>)}
+        </div>
+      </div>
+    </div>
+
+    <ul class="contacts">
+      {
+        site.contacts.map((c) => (
+          <li>
+            <a
+              href={c.href}
+              title={c.value}
+              rel={c.href.startsWith('/') ? undefined : 'me noopener'}
+            >
+              <span class="clabel">{c.label}</span>
+              <span class="cvalue">{c.value}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="projects" aria-labelledby="projects-heading">
+    <h2 id="projects-heading" class="section-label">projects</h2>
+
+    {
+      projects.length === 0 ? (
+        <p class="empty">
+          아직 공개된 프로젝트가 없습니다. <code>src/content/projects/</code> 에 마크다운을
+          추가하세요.
+        </p>
+      ) : (
+        <div class="grid">
+          {projects.map((p) => (
+            <ProjectCard project={p} chapters={counts[p.id] ?? 0} />
+          ))}
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>
+
+<style>
+  /* ── 히어로 ─────────────────────────────────────────── */
+
+  .hero {
+    display: grid;
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+  }
+
+  .window {
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-elevated);
+    overflow: hidden;
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    background: var(--surface);
+    border-bottom: var(--border-width) solid var(--border);
+  }
+
+  .dots {
+    display: inline-flex;
+    gap: 0.375rem;
+  }
+  .dot {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 50%;
+  }
+  .dot.r {
+    background: var(--dot-red);
+  }
+  .dot.a {
+    background: var(--dot-amber);
+  }
+  .dot.g {
+    background: var(--dot-green);
+  }
+
+  .bartitle {
+    font-size: var(--text-xs);
+    color: var(--muted);
+  }
+
+  .screen {
+    padding: var(--space-6) var(--space-5);
+  }
+
+  .cmdline {
+    display: flex;
+    gap: 0.6ch;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+  }
+
+  .cmdline.second {
+    margin-top: var(--space-6);
+  }
+
+  .prompt {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .cmd {
+    color: var(--magenta);
+  }
+  .arg {
+    color: var(--green);
+  }
+
+  .name {
+    margin-top: var(--space-3);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: var(--leading-tight);
+    color: var(--text-strong);
+  }
+
+  .role {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    letter-spacing: 0;
+    color: var(--amber);
+  }
+
+  .role::before {
+    content: '// ';
+    color: var(--faint);
+  }
+
+  .intro {
+    margin-top: var(--space-3);
+    display: grid;
+    gap: var(--space-2);
+    max-width: var(--prose-width);
+    font-family: var(--font-sans);
+    font-size: var(--text-md);
+    line-height: var(--leading-relaxed);
+    color: var(--text);
+  }
+
+  /* ── 연락처 ─────────────────────────────────────────── */
+
+  .contacts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: var(--space-3);
+    list-style: none;
+    padding: 0;
+  }
+
+  .contacts a {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-3) var(--space-4);
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-elevated);
+    text-decoration: none;
+    transition:
+      border-color var(--transition),
+      background var(--transition);
+  }
+
+  .contacts a:hover {
+    border-color: var(--accent-border);
+    background: var(--surface);
+  }
+
+  .clabel {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+    color: var(--accent);
+  }
+
+  .clabel::before {
+    content: '→ ';
+    color: var(--faint);
+  }
+
+  .cvalue {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ── 프로젝트 ───────────────────────────────────────── */
+
+  .projects {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+    gap: var(--space-4);
+  }
+
+  .empty {
+    padding: var(--space-6);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-size: var(--text-sm);
+    text-align: center;
+  }
+
+  .empty code {
+    color: var(--amber);
+  }
+
+  @media (max-width: 40rem) {
+    .screen {
+      padding: var(--space-5) var(--space-4);
+    }
+    .name {
+      font-size: var(--text-xl);
+    }
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

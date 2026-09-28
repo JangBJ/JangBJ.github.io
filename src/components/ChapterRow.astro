@@ -1,0 +1,132 @@
+---
+import type { Chapter } from '../lib/content';
+import { formatDateShort, readingTime, splitChapterId } from '../lib/content';
+
+interface Props {
+  chapter: Chapter;
+  /** 화면에 찍히는 번호. 카테고리 그룹을 넘어가도 이어집니다. */
+  index: number;
+}
+
+const { chapter, index } = Astro.props;
+const { project, chapter: slug } = splitChapterId(chapter.id);
+const href = `/projects/${project}/${slug}/`;
+
+const num = String(index).padStart(2, '0');
+const date = formatDateShort(chapter.data.date);
+const mins = readingTime(chapter.body);
+---
+
+<a class="row" href={href}>
+  <span class="num" aria-hidden="true">{num}</span>
+
+  <span class="text">
+    <span class="title">{chapter.data.title}</span>
+    {chapter.data.description && <span class="desc">{chapter.data.description}</span>}
+  </span>
+
+  <span class="meta">
+    {date && <span class="date">{date}</span>}
+    <span class="mins">{mins}분</span>
+    <span class="arrow" aria-hidden="true">→</span>
+  </span>
+</a>
+
+<style>
+  .row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: baseline;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-4) var(--space-4) var(--space-3);
+    border-left: 2px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+    transition:
+      border-color var(--transition),
+      background var(--transition);
+  }
+
+  .row:hover,
+  .row:focus-visible {
+    border-left-color: var(--accent);
+    background: var(--surface);
+  }
+
+  .num {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .row:hover .num {
+    color: var(--accent);
+  }
+
+  .text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+
+  .title {
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--text-strong);
+    line-height: var(--leading-tight);
+  }
+
+  .row:hover .title {
+    color: var(--accent);
+  }
+
+  .desc {
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    color: var(--muted);
+    line-height: var(--leading-normal);
+  }
+
+  .meta {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .arrow {
+    color: var(--border-strong);
+    transition:
+      transform var(--transition),
+      color var(--transition);
+  }
+
+  .row:hover .arrow {
+    color: var(--accent);
+    transform: translateX(3px);
+  }
+
+  @media (max-width: 40rem) {
+    .row {
+      grid-template-columns: auto 1fr;
+      gap: var(--space-3);
+      padding: var(--space-3);
+    }
+
+    .meta {
+      grid-column: 2;
+    }
+
+    .arrow {
+      display: none;
+    }
+  }
+</style>
